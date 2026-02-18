@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022"
+  },
+  "include": [
+    "src/embedding-cli.ts",
+    "src/gather-embedding-responses.ts",
+    "src/embedding-types.ts",
+    "src/helpers.ts",
+    "src/logger.ts",
+    "src/constants.ts",
+    "shared/**/*.ts",
+    "cost_estimator/**/*.ts",
+    "db_sync_graph/**/*.ts"
+  ]
+}
