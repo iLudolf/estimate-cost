@@ -1,4 +1,4 @@
-import type { TextColumnsMode } from "../cost_estimator/db/types.js";
+import type { TextColumnsMode } from "./cost_estimator/db/types.js";
 
 export type EmbeddingOperation = "estimate";
 

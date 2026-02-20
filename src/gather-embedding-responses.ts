@@ -5,7 +5,7 @@ import type {
   EmbeddingOperation,
   CommonEmbeddingParams,
 } from "./embedding-types.js";
-import type { TextColumnsMode } from "../cost_estimator/db/types.js";
+import type { TextColumnsMode } from "./cost_estimator/db/types.js";
 
 // ---------------------------------------------------------------------------
 // Public API

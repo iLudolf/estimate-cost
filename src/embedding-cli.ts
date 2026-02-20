@@ -7,8 +7,8 @@ import { log } from "./logger.js";
 import { REQUIRED_NODE_VERSION } from "./constants.js";
 import { gatherEmbeddingResponses } from "./gather-embedding-responses.js";
 import type { EmbeddingUserAnswers } from "./embedding-types.js";
-import { estimateCost, EMBEDDING_MODEL_PRICING } from "../cost_estimator/estimate.js";
-import type { CostEstimationResult } from "../cost_estimator/estimate.js";
+import { estimateCost, EMBEDDING_MODEL_PRICING } from "./cost_estimator/estimate.js";
+import type { CostEstimationResult } from "./cost_estimator/estimate.js";
 
 checkNodeVersion(REQUIRED_NODE_VERSION);
 
