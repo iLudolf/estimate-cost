@@ -1,6 +1,6 @@
 import { Document } from "@langchain/core/documents";
 import { computeRowHash, sha256Hex, stableStringify } from "./hashing.js";
-import { TableInfo, TextColumnsMode } from "./state.js";
+import { TableInfo, TextColumnsMode } from "./types.js";
 
 const TEXTUAL_DATA_TYPES = [
   "text",

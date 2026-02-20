@@ -3,11 +3,9 @@ import { checkCancel } from "./helpers.js";
 import type {
   EmbeddingUserAnswers,
   EmbeddingOperation,
-  ElasticAuthMode,
   CommonEmbeddingParams,
-  SyncOnlyParams,
 } from "./embedding-types.js";
-import type { TextColumnsMode } from "../db_sync_graph/state.js";
+import type { TextColumnsMode } from "../cost_estimator/db/types.js";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -15,29 +13,7 @@ import type { TextColumnsMode } from "../db_sync_graph/state.js";
 
 export async function gatherEmbeddingResponses(): Promise<EmbeddingUserAnswers> {
   // ── Step 1: Operation ────────────────────────────────────────────────────
-  const operation = await select({
-    message: "O que deseja fazer?",
-    options: [
-      {
-        label: "Estimar custo de embedding",
-        value: "estimate",
-        hint: "Escaneia tabelas e calcula custo de tokenização",
-      },
-      {
-        label: "Sincronizar DB → Elasticsearch",
-        value: "sync",
-        hint: "Gera embeddings e indexa linhas no Elasticsearch",
-      },
-      {
-        label: "Estimar e depois sincronizar",
-        value: "both",
-        hint: "Mostra o custo primeiro, depois executa o sync",
-      },
-    ],
-    initialValue: "estimate" as EmbeddingOperation,
-  });
-  checkCancel(operation);
-  const op = operation as EmbeddingOperation;
+  const op: EmbeddingOperation = "estimate";
 
   // ── Step 2: Database connection ──────────────────────────────────────────
   const sourceDbUrl = await resolveDbUrl();
@@ -143,15 +119,7 @@ export async function gatherEmbeddingResponses(): Promise<EmbeddingUserAnswers> 
     updatedAtCandidates,
   };
 
-  // ── Step 6: Estimate-only → done ─────────────────────────────────────────
-  if (op === "estimate") {
-    return { operation: op, common };
-  }
-
-  // ── Step 7: Sync-specific questions ──────────────────────────────────────
-  const sync = await resolveSyncParams();
-
-  return { operation: op, common, sync };
+  return { operation: op, common };
 }
 
 // ---------------------------------------------------------------------------
@@ -233,167 +201,6 @@ async function resolveDbUrl(): Promise<string> {
     (dbUser as string).trim(),
     (dbPass as string).trim()
   );
-}
-
-// ---------------------------------------------------------------------------
-// Sync-specific resolution
-// ---------------------------------------------------------------------------
-
-async function resolveSyncParams(): Promise<SyncOnlyParams> {
-  // Elasticsearch URL
-  const envEsUrl = process.env.ELASTICSEARCH_URL?.trim() || "";
-  let elasticsearchUrl: string;
-
-  if (envEsUrl) {
-    elasticsearchUrl = envEsUrl;
-  } else {
-    const esUrlInput = await text({
-      message: "URL do Elasticsearch?",
-      placeholder: "https://my-deployment.es.us-east-1.aws.found.io",
-      validate: required,
-    });
-    checkCancel(esUrlInput);
-    elasticsearchUrl = (esUrlInput as string).trim();
-  }
-
-  // Auth mode
-  const authMode = await select({
-    message: "Modo de autenticação do Elasticsearch?",
-    options: [
-      {
-        label: "Cloud — API Key",
-        value: "cloud",
-        hint: "Elastic Cloud / deployments gerenciados",
-      },
-      {
-        label: "Local — usuário + senha",
-        value: "local",
-        hint: "Self-hosted / Docker",
-      },
-    ],
-    initialValue: "cloud" as ElasticAuthMode,
-  });
-  checkCancel(authMode);
-  const elasticAuthMode = authMode as ElasticAuthMode;
-
-  let elasticsearchApiKey: string | undefined;
-  let elasticsearchUser: string | undefined;
-  let elasticsearchPassword: string | undefined;
-
-  if (elasticAuthMode === "cloud") {
-    const envApiKey = process.env.ELASTICSEARCH_API_KEY?.trim() || "";
-    if (envApiKey) {
-      elasticsearchApiKey = envApiKey;
-    } else {
-      const apiKeyInput = await text({
-        message: "API Key do Elasticsearch?",
-        validate: required,
-      });
-      checkCancel(apiKeyInput);
-      elasticsearchApiKey = (apiKeyInput as string).trim();
-    }
-  } else {
-    const envUser = process.env.ELASTICSEARCH_USER?.trim() || "";
-    const envPass = process.env.ELASTICSEARCH_PASSWORD?.trim() || "";
-    if (envUser && envPass) {
-      elasticsearchUser = envUser;
-      elasticsearchPassword = envPass;
-    } else {
-      const userInput = await text({
-        message: "Usuário do Elasticsearch?",
-        validate: required,
-      });
-      checkCancel(userInput);
-      elasticsearchUser = (userInput as string).trim();
-
-      const passInput = await text({
-        message: "Senha do Elasticsearch?",
-        validate: required,
-      });
-      checkCancel(passInput);
-      elasticsearchPassword = (passInput as string).trim();
-    }
-  }
-
-  // Embedding model
-  const modelInput = await select({
-    message: "Modelo de embedding?",
-    options: [
-      {
-        label: "OpenAI text-embedding-3-small",
-        value: "openai/text-embedding-3-small",
-        hint: "$0.02/1M tokens",
-      },
-      {
-        label: "OpenAI text-embedding-3-large",
-        value: "openai/text-embedding-3-large",
-        hint: "$0.13/1M tokens",
-      },
-      {
-        label: "Cohere embed-english-v3.0",
-        value: "cohere/embed-english-v3.0",
-      },
-      {
-        label: "Personalizado (digitar manualmente)",
-        value: "custom",
-      },
-    ],
-    initialValue: "openai/text-embedding-3-small",
-  });
-  checkCancel(modelInput);
-
-  let embeddingModel = modelInput as string;
-  if (embeddingModel === "custom") {
-    const customInput = await text({
-      message: "Modelo de embedding (formato provider/model)?",
-      placeholder: "openai/text-embedding-3-small",
-      validate: (v) =>
-        !v?.includes("/") ? "Use o formato provider/model" : undefined,
-    });
-    checkCancel(customInput);
-    embeddingModel = (customInput as string).trim();
-  }
-
-  // OpenAI API key
-  let openaiApiKey: string | undefined;
-  if (embeddingModel.startsWith("openai/")) {
-    const envOpenAiKey = process.env.OPENAI_API_KEY?.trim() || "";
-    if (!envOpenAiKey) {
-      const keyInput = await text({
-        message: "OpenAI API Key?",
-        placeholder: "sk-...",
-        validate: required,
-      });
-      checkCancel(keyInput);
-      openaiApiKey = (keyInput as string).trim();
-    }
-  }
-
-  // Index prefix
-  const envPrefix = process.env.TARGET_INDEX_PREFIX?.trim() || "";
-  let targetIndexPrefix: string;
-
-  if (envPrefix) {
-    targetIndexPrefix = envPrefix;
-  } else {
-    const prefixInput = await text({
-      message: "Prefixo dos índices no Elasticsearch?",
-      initialValue: "db_table_",
-    });
-    checkCancel(prefixInput);
-    targetIndexPrefix = ((prefixInput as string) || "db_table_").trim() || "db_table_";
-  }
-
-  return {
-    targetIndexPrefix,
-    embeddingModel,
-    elasticsearchUrl,
-    elasticAuthMode,
-    elasticsearchApiKey,
-    elasticsearchUser,
-    elasticsearchPassword,
-    openaiApiKey,
-  };
 }
 
 // ---------------------------------------------------------------------------

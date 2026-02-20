@@ -1,8 +1,6 @@
-import type { TextColumnsMode } from "../db_sync_graph/state.js";
+import type { TextColumnsMode } from "../cost_estimator/db/types.js";
 
-export type EmbeddingOperation = "estimate" | "sync" | "both";
-
-export type ElasticAuthMode = "cloud" | "local";
+export type EmbeddingOperation = "estimate";
 
 export interface CommonEmbeddingParams {
   sourceDbUrl: string;
@@ -15,19 +13,7 @@ export interface CommonEmbeddingParams {
   updatedAtCandidates: string[];
 }
 
-export interface SyncOnlyParams {
-  targetIndexPrefix: string;
-  embeddingModel: string;
-  elasticsearchUrl: string;
-  elasticAuthMode: ElasticAuthMode;
-  elasticsearchApiKey?: string;
-  elasticsearchUser?: string;
-  elasticsearchPassword?: string;
-  openaiApiKey?: string;
-}
-
 export interface EmbeddingUserAnswers {
   operation: EmbeddingOperation;
   common: CommonEmbeddingParams;
-  sync?: SyncOnlyParams;
 }

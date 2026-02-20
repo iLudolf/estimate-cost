@@ -6,10 +6,10 @@ import {
   closePostgresPool,
   discoverTables,
   fetchTableSnapshot,
-} from "../db_sync_graph/postgres.js";
+} from "./db/postgres.js";
 import { processTablesInParallel } from "./thread_pool.js";
 import type { TableTokenEstimate } from "./thread_pool.js";
-import type { TextColumnsMode } from "../db_sync_graph/state.js";
+import type { TextColumnsMode } from "./db/types.js";
 import { TerminalUI } from "./terminal_ui.js";
 import { ProgressFileWriter } from "./progress_file.js";
 

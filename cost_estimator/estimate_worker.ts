@@ -2,9 +2,9 @@ import { parentPort } from "node:worker_threads";
 import { Pool } from "pg";
 import { encodingForModel } from "js-tiktoken";
 import type { TiktokenModel } from "js-tiktoken";
-import { fetchTableRows } from "../db_sync_graph/postgres.js";
-import { transformRowToDocument } from "../db_sync_graph/transform.js";
-import type { TableInfo, TextColumnsMode } from "../db_sync_graph/state.js";
+import { fetchTableRows } from "./db/postgres.js";
+import { transformRowToDocument } from "./db/transform.js";
+import type { TableInfo, TextColumnsMode } from "./db/types.js";
 
 // ---------------------------------------------------------------------------
 // Types – messages exchanged between main thread and worker

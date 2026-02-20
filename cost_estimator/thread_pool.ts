@@ -1,6 +1,6 @@
 import { Worker } from "node:worker_threads";
 import { cpus } from "node:os";
-import type { TableInfo, TextColumnsMode } from "../db_sync_graph/state.js";
+import type { TableInfo, TextColumnsMode } from "./db/types.js";
 import type { WorkerRequest, WorkerResponse } from "./estimate_worker.js";
 
 // ---------------------------------------------------------------------------

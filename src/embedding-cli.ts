@@ -9,8 +9,6 @@ import { gatherEmbeddingResponses } from "./gather-embedding-responses.js";
 import type { EmbeddingUserAnswers } from "./embedding-types.js";
 import { estimateCost, EMBEDDING_MODEL_PRICING } from "../cost_estimator/estimate.js";
 import type { CostEstimationResult } from "../cost_estimator/estimate.js";
-import { graph as dbSyncGraph } from "../db_sync_graph/graph.js";
-import type { RunSummary, RunStatus } from "../db_sync_graph/state.js";
 
 checkNodeVersion(REQUIRED_NODE_VERSION);
 
@@ -21,29 +19,12 @@ checkNodeVersion(REQUIRED_NODE_VERSION);
 async function main(): Promise<void> {
   intro(
     pc.blue(pc.bold("Embedding CLI")) +
-      pc.dim("  —  Estime custos e sincronize tabelas para o Elasticsearch")
+      pc.dim("  —  Estimativa de custo de embedding")
   );
 
   const answers = await gatherEmbeddingResponses();
 
-  if (answers.operation === "estimate" || answers.operation === "both") {
-    await runEstimate(answers);
-  }
-
-  if (answers.operation === "sync" || answers.operation === "both") {
-    if (answers.operation === "both") {
-      const proceed = await confirm({
-        message: "Prosseguir com a sincronização para o Elasticsearch?",
-        initialValue: true,
-      });
-      checkCancel(proceed);
-      if (!proceed) {
-        outro(pc.yellow("Sincronização cancelada. Resultados da estimativa exibidos acima."));
-        return;
-      }
-    }
-    await runSync(answers);
-  }
+  await runEstimate(answers);
 
   outro(pc.green("Concluído!"));
 }
@@ -73,71 +54,6 @@ async function runEstimate(answers: EmbeddingUserAnswers): Promise<void> {
   });
 
   displayCostResults(result);
-}
-
-// ---------------------------------------------------------------------------
-// Sync runner
-// ---------------------------------------------------------------------------
-
-async function runSync(answers: EmbeddingUserAnswers): Promise<void> {
-  const { common, sync } = answers;
-  if (!sync) throw new Error("Parâmetros de sync ausentes");
-
-  log("", { newline: "before" });
-  log(pc.bold(pc.cyan("Sincronização para o Elasticsearch")));
-
-  // Inject credentials into process.env — elastic_control.ts reads them directly
-  process.env.ELASTICSEARCH_URL = sync.elasticsearchUrl;
-  if (sync.elasticAuthMode === "cloud" && sync.elasticsearchApiKey) {
-    process.env.ELASTICSEARCH_API_KEY = sync.elasticsearchApiKey;
-  }
-  if (sync.elasticAuthMode === "local") {
-    if (sync.elasticsearchUser)
-      process.env.ELASTICSEARCH_USER = sync.elasticsearchUser;
-    if (sync.elasticsearchPassword)
-      process.env.ELASTICSEARCH_PASSWORD = sync.elasticsearchPassword;
-  }
-  if (sync.openaiApiKey) {
-    process.env.OPENAI_API_KEY = sync.openaiApiKey;
-  }
-
-  const retrieverProvider =
-    sync.elasticAuthMode === "local" ? "elastic-local" : "elastic";
-
-  const s = spinner();
-  s.start("Iniciando workflow de sincronização...");
-
-  try {
-    const finalState = await dbSyncGraph.invoke(
-      {},
-      {
-        configurable: {
-          retrieverProvider,
-          embeddingModel: sync.embeddingModel,
-          sourceDbUrl: common.sourceDbUrl,
-          sourceSchema: common.sourceSchema,
-          tableAllowlist: common.tableAllowlist,
-          updatedAtCandidates: common.updatedAtCandidates,
-          batchSize: common.batchSize,
-          targetIndexPrefix: sync.targetIndexPrefix,
-          textColumnsMode: common.textColumnsMode,
-          excludedColumns: common.excludedColumns,
-        } as Record<string, unknown>,
-      }
-    );
-
-    s.stop(pc.green("Workflow de sincronização concluído"));
-    displaySyncResults(
-      finalState.summary as RunSummary,
-      finalState.status as RunStatus,
-      finalState.fatalError as string | null
-    );
-  } catch (error: unknown) {
-    s.stop(pc.red("Sync falhou"));
-    const msg = error instanceof Error ? error.message : String(error);
-    log(pc.red(msg));
-    throw error;
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -202,60 +118,6 @@ function displayCostResults(result: CostEstimationResult): void {
   lines.push("");
 
   note(lines.join("\n"), pc.green("Estimativa concluída"));
-}
-
-function displaySyncResults(
-  summary: RunSummary,
-  status: RunStatus,
-  fatalError: string | null
-): void {
-  const sep = pc.dim("─".repeat(60));
-  const statusColor =
-    status === "success"
-      ? pc.green
-      : status === "partial_success"
-        ? pc.yellow
-        : pc.red;
-
-  const lines: string[] = [
-    "",
-    sep,
-    pc.bold("  RESULTADO DA SINCRONIZAÇÃO"),
-    sep,
-    "",
-    `  Status:                ${statusColor(pc.bold(status.toUpperCase()))}`,
-    `  Tabelas processadas:   ${pc.white(String(summary.tablesTotal))}`,
-    `  Tabelas reindexadas:   ${pc.green(String(summary.tablesReindexed))}`,
-    `  Tabelas ignoradas:     ${pc.dim(String(summary.tablesSkipped))}`,
-    `  Linhas inseridas:      ${pc.cyan(summary.rowsUpserted.toLocaleString("pt-BR"))}`,
-  ];
-
-  if (fatalError) {
-    lines.push("");
-    lines.push(`  ${pc.red(pc.bold("Erro fatal:"))} ${pc.red(fatalError)}`);
-  }
-
-  if (summary.errors.length > 0) {
-    lines.push("");
-    lines.push(
-      `  ${pc.red(pc.bold(`Erros por tabela (${summary.errors.length}):`))} `
-    );
-    for (const err of summary.errors) {
-      lines.push(`    ${pc.red("✗")} ${err.tableKey}: ${pc.dim(err.message)}`);
-    }
-  }
-
-  lines.push(sep);
-  lines.push("");
-
-  const noteTitle =
-    status === "success"
-      ? pc.green("Sync concluído")
-      : status === "partial_success"
-        ? pc.yellow("Sync parcialmente concluído")
-        : pc.red("Sync falhou");
-
-  note(lines.join("\n"), noteTitle);
 }
 
 // ---------------------------------------------------------------------------

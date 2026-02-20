@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { ColumnInfo, TableInfo } from "./state.js";
+import { ColumnInfo, TableInfo } from "./types.js";
 
 type TableNameRow = {
   table_name: string;
