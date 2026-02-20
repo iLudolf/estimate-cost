@@ -1,0 +1,1459 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embedding Cost Progress Dashboard</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: rgba(255, 255, 255, 0.9);
+        --panel-solid: #ffffff;
+        --ink: #0f172a;
+        --muted: #546173;
+        --accent-blue: #1d4ed8;
+        --accent-teal: #0f766e;
+        --accent-amber: #b45309;
+        --success: #166534;
+        --warning: #9a3412;
+        --danger: #b91c1c;
+        --radius: 20px;
+        --shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+        --border: rgba(15, 23, 42, 0.09);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 8% 14%, rgba(29, 78, 216, 0.16), transparent 38%),
+          radial-gradient(circle at 88% 0%, rgba(180, 83, 9, 0.14), transparent 34%),
+          linear-gradient(170deg, #f8fbff 0%, #eff4ff 52%, #f4f7fb 100%);
+        font-family: "Space Grotesk", "Manrope", "Helvetica Neue", sans-serif;
+      }
+
+      .page {
+        position: relative;
+        z-index: 1;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 26px 16px 48px;
+      }
+
+      .hero {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 22px;
+        background: linear-gradient(140deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.82));
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: clamp(1.15rem, 2.4vw, 1.75rem);
+        letter-spacing: 0.01em;
+      }
+
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.45;
+        max-width: 66ch;
+      }
+
+      .meta {
+        margin-top: 12px;
+        display: grid;
+        gap: 6px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .status-box {
+        display: grid;
+        gap: 10px;
+        justify-items: end;
+        text-align: right;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        background: rgba(29, 78, 216, 0.12);
+        color: var(--accent-blue);
+      }
+
+      .badge.ok {
+        background: rgba(22, 101, 52, 0.15);
+        color: var(--success);
+      }
+
+      .badge.warn {
+        background: rgba(154, 52, 18, 0.14);
+        color: var(--warning);
+      }
+
+      .cards {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+      }
+
+      .card .label {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .card .value {
+        margin: 0;
+        font-size: clamp(1.15rem, 2vw, 1.45rem);
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+
+      .card .sub {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        line-height: 1.35;
+      }
+
+      .cost-strip {
+        margin-top: 12px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+      }
+
+      .cost-strip .label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .cost-strip-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .cost-model-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .cost-model-select {
+        max-width: min(520px, 60vw);
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #ffffff;
+        color: var(--ink);
+        font-size: 0.86rem;
+      }
+
+      .cost-strip-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+        min-width: 0;
+      }
+
+      .cost-strip-main {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .cost-strip-breakdown {
+        width: 100%;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      #cardCost {
+        margin: 0;
+        font-size: clamp(1.15rem, 2vw, 1.45rem);
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+
+      .cost-breakdown-details {
+        width: 100%;
+        color: var(--muted);
+      }
+
+      .cost-breakdown-details summary {
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .cost-breakdown-list {
+        margin: 0;
+        margin-top: 8px;
+        padding-left: 18px;
+        font-size: 0.86rem;
+        line-height: 1.35;
+        max-height: 180px;
+        overflow: auto;
+      }
+
+      .cost-breakdown-list li {
+        margin-bottom: 4px;
+      }
+
+      .cost-breakdown-list li:last-child {
+        margin-bottom: 0;
+      }
+
+      .cost-breakdown-empty {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.35;
+      }
+
+      .chart-sections {
+        margin-top: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .panel {
+        background: var(--panel-solid);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+
+      .panel-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .panel-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .chart-wrap {
+        position: relative;
+        height: 310px;
+      }
+
+      .table-panel {
+        margin-top: 12px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 960px;
+      }
+
+      th,
+      td {
+        padding: 11px 10px;
+        text-align: left;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        background: #f8fbff;
+        color: #2c3c52;
+        z-index: 1;
+      }
+
+      tbody tr:hover {
+        background: #f4f8ff;
+      }
+
+      .table-name {
+        font-weight: 600;
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 3px 9px;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .chip.ok {
+        color: var(--success);
+        background: rgba(22, 101, 52, 0.15);
+      }
+
+      .chip.error {
+        color: var(--danger);
+        background: rgba(185, 28, 28, 0.14);
+      }
+
+      .num {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 24px 10px;
+      }
+
+      .error-banner {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(185, 28, 28, 0.25);
+        background: rgba(185, 28, 28, 0.08);
+        color: var(--danger);
+        font-size: 0.9rem;
+      }
+
+      .footnote {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(10px);
+        animation: reveal 500ms ease forwards;
+        animation-delay: var(--delay, 0ms);
+      }
+
+      @keyframes reveal {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 860px) {
+        .hero {
+          flex-direction: column;
+        }
+
+        .status-box {
+          width: 100%;
+          justify-items: start;
+          text-align: left;
+        }
+
+        .chart-wrap {
+          height: 280px;
+        }
+
+        .cost-strip-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .cost-model-select {
+          max-width: 100%;
+          width: 100%;
+        }
+
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero reveal" style="--delay: 20ms">
+        <div>
+          <h1>Dashboard de Evolucao da Estimativa de Embeddings</h1>
+          <p>
+            Acompanhamento em tempo real por tabela com progresso, acumulados e custo.
+            O painel atualiza automaticamente conforme o arquivo de progresso recebe novos dados.
+          </p>
+          <div class="meta">
+            <div><strong>Arquivo:</strong> <span id="filePath">-</span></div>
+            <div><strong>Ultima atualizacao:</strong> <span id="lastUpdate">-</span></div>
+          </div>
+        </div>
+        <div class="status-box">
+          <span id="runStatus" class="badge">Aguardando dados</span>
+          <span id="streamStatus" class="badge warn">Conectando tempo real...</span>
+        </div>
+      </section>
+
+      <section class="cards">
+        <article class="card reveal" style="--delay: 60ms">
+          <p class="label">Progresso global</p>
+          <p id="cardPercent" class="value">0%</p>
+          <div class="sub">
+            <span id="cardCompleted">0</span> de <span id="cardTotal">0</span> tabelas
+          </div>
+        </article>
+        <article class="card reveal" style="--delay: 100ms">
+          <p class="label">Linhas acumuladas</p>
+          <p id="cardRows" class="value num">0</p>
+          <div class="sub">Somatorio das tabelas concluidas</div>
+        </article>
+        <article class="card reveal" style="--delay: 140ms">
+          <p class="label">Tokens acumulados</p>
+          <p id="cardTokens" class="value num">0</p>
+          <div class="sub">Base para calculo de custo</div>
+        </article>
+        <article class="card reveal" style="--delay: 220ms">
+          <p class="label">Erros</p>
+          <p id="cardErrors" class="value num">0</p>
+          <div class="sub">Tabelas com falha de processamento</div>
+        </article>
+        <article class="card reveal" style="--delay: 260ms">
+          <p class="label">Tempo decorrido</p>
+          <p id="cardElapsed" class="value">00:00:00</p>
+          <div class="sub">Desde o inicio da execucao</div>
+        </article>
+      </section>
+
+      <section class="cost-strip reveal" style="--delay: 280ms">
+        <div class="cost-strip-head">
+          <p class="label">Custo acumulado (modelo selecionado)</p>
+          <label class="cost-model-control" for="costModelSelect">
+            Modelo:
+            <select id="costModelSelect" class="cost-model-select" aria-label="Selecionar modelo de custo">
+              <option value="">Sem modelos com custo</option>
+            </select>
+          </label>
+        </div>
+        <div class="cost-strip-content">
+          <div class="cost-strip-main">
+            <p id="cardCost">-</p>
+          </div>
+          <div class="cost-strip-breakdown">
+            <details id="costBreakdownDetails" class="cost-breakdown-details" hidden>
+              <summary id="costBreakdownSummary">Ver custos por modelo</summary>
+              <ul id="costBreakdownList" class="cost-breakdown-list"></ul>
+            </details>
+            <p id="costBreakdownEmpty" class="cost-breakdown-empty">Sem dados de custo</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="chart-sections">
+        <article class="panel reveal" style="--delay: 300ms">
+          <div class="panel-head">
+            <h2>Evolucao acumulada por tabela</h2>
+            <p>Linhas e tokens acumulados conforme as tabelas finalizam</p>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="timelineChart"></canvas>
+          </div>
+        </article>
+        <article class="panel reveal" style="--delay: 340ms">
+          <div class="panel-head">
+            <h2>Progresso por tabela (%)</h2>
+            <p>Percentual de conclusao na ordem em que as tabelas finalizam</p>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="progressChart"></canvas>
+          </div>
+        </article>
+        <article class="panel reveal" style="--delay: 380ms">
+          <div class="panel-head">
+            <h2>Custo acumulado (modelo selecionado)</h2>
+            <p id="costModelHint">Curva de custo com base no modelo selecionado</p>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="costChart"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel table-panel reveal" style="--delay: 420ms">
+        <div class="panel-head">
+          <h2>Detalhamento por tabela processada</h2>
+          <p>Percentual no momento da conclusao e acumulados ate o ponto</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tabela</th>
+                <th>% concluido</th>
+                <th>Status</th>
+                <th>Linhas</th>
+                <th>Tokens</th>
+                <th>Linhas acumuladas</th>
+                <th>Tokens acumulados</th>
+                <th>Custo acumulado (modelo selecionado)</th>
+                <th>Concluida em</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr>
+                <td class="empty" colspan="9">Nenhuma tabela processada ate agora.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="errorBanner" class="error-banner" hidden></div>
+      <p class="footnote">Atualizacao por stream em tempo real com fallback de consulta periodica.</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+      (() => {
+        const FALLBACK_POLL_MS = 2000;
+
+        const numberFormat = new Intl.NumberFormat("pt-BR");
+        const percentFormat = new Intl.NumberFormat("pt-BR", {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        });
+        const currencyFormat = new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 4,
+          maximumFractionDigits: 6,
+        });
+        const dateTimeFormat = new Intl.DateTimeFormat("pt-BR", {
+          dateStyle: "short",
+          timeStyle: "medium",
+        });
+
+        const state = {
+          timelineChart: null,
+          progressChart: null,
+          costChart: null,
+          source: null,
+          fallbackTimer: null,
+          lastHash: "",
+          elapsedTimer: null,
+          elapsedAnchorSeconds: 0,
+          elapsedAnchorTimestamp: 0,
+          elapsedStartTimestamp: null,
+          elapsedRunning: false,
+          selectedCostModel: null,
+          latestSeries: null,
+          latestMeta: null,
+        };
+
+        const COST_MODEL_STORAGE_KEY = "progressDashboard:selectedCostModel";
+
+        function getById(id) {
+          return document.getElementById(id);
+        }
+
+        function toNumber(value) {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function formatNumber(value) {
+          return numberFormat.format(toNumber(value));
+        }
+
+        function formatPercent(value) {
+          return `${percentFormat.format(toNumber(value))}%`;
+        }
+
+        function formatCurrency(value) {
+          return currencyFormat.format(toNumber(value));
+        }
+
+        function formatDateTime(value) {
+          if (!value) {
+            return "-";
+          }
+          const date = new Date(value);
+          if (Number.isNaN(date.getTime())) {
+            return "-";
+          }
+          return dateTimeFormat.format(date);
+        }
+
+        function formatElapsed(totalSeconds) {
+          const seconds = Math.max(0, Math.floor(toNumber(totalSeconds)));
+          const hh = Math.floor(seconds / 3600);
+          const mm = Math.floor((seconds % 3600) / 60);
+          const ss = seconds % 60;
+          return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+        }
+
+        function setElapsedCard(seconds) {
+          const elapsedNode = getById("cardElapsed");
+          if (!elapsedNode) {
+            return;
+          }
+          elapsedNode.textContent = formatElapsed(seconds);
+        }
+
+        function stopElapsedTicker() {
+          if (state.elapsedTimer === null) {
+            return;
+          }
+          clearInterval(state.elapsedTimer);
+          state.elapsedTimer = null;
+        }
+
+        function computeElapsedSecondsNow() {
+          if (
+            typeof state.elapsedStartTimestamp === "number" &&
+            Number.isFinite(state.elapsedStartTimestamp)
+          ) {
+            return Math.max(0, (Date.now() - state.elapsedStartTimestamp) / 1000);
+          }
+
+          const base = toNumber(state.elapsedAnchorSeconds);
+          if (!state.elapsedRunning) {
+            return base;
+          }
+
+          const delta = Math.max(0, Date.now() - toNumber(state.elapsedAnchorTimestamp));
+          return base + delta / 1000;
+        }
+
+        function updateElapsedCardNow() {
+          setElapsedCard(computeElapsedSecondsNow());
+        }
+
+        function startElapsedTicker() {
+          if (state.elapsedTimer !== null) {
+            return;
+          }
+          state.elapsedTimer = setInterval(() => {
+            updateElapsedCardNow();
+          }, 1000);
+        }
+
+        function configureElapsedTicker(series) {
+          const parsedStart = new Date(series.startTime).getTime();
+          const hasValidStart = Number.isFinite(parsedStart);
+
+          state.elapsedRunning = series.status !== "completed";
+          state.elapsedAnchorSeconds = toNumber(series.elapsedSeconds);
+          state.elapsedAnchorTimestamp = Date.now();
+          state.elapsedStartTimestamp = hasValidStart ? parsedStart : null;
+
+          updateElapsedCardNow();
+
+          if (state.elapsedRunning) {
+            startElapsedTicker();
+            return;
+          }
+
+          stopElapsedTicker();
+        }
+
+        function escapeHtml(value) {
+          return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+        }
+
+        function compactLabel(value) {
+          const input = String(value);
+          if (input.length <= 26) {
+            return input;
+          }
+          return `${input.slice(0, 14)}...${input.slice(-9)}`;
+        }
+
+        function getPayloadHash(progress) {
+          try {
+            return JSON.stringify(progress);
+          } catch {
+            return String(Date.now());
+          }
+        }
+
+        function getModelCosts(costByModel) {
+          if (!costByModel || typeof costByModel !== "object") {
+            return [];
+          }
+          return Object.entries(costByModel).map(([model, cost]) => ({
+            model,
+            cost: toNumber(cost),
+          }));
+        }
+
+        function getSelectableCosts(costs) {
+          if (!Array.isArray(costs)) {
+            return [];
+          }
+          return costs.filter((entry) => toNumber(entry?.cost) > 0);
+        }
+
+        function renderCostBreakdownList(listNode, costs, selectedModel) {
+          if (!listNode) {
+            return;
+          }
+          listNode.replaceChildren();
+          costs.forEach((entry) => {
+            const item = document.createElement("li");
+            const selectedTag = entry.model === selectedModel ? " (selecionado)" : "";
+            item.textContent = `${entry.model}: ${formatCurrency(entry.cost)}${selectedTag}`;
+            listNode.appendChild(item);
+          });
+        }
+
+        function loadSavedCostModel() {
+          try {
+            const saved = window.localStorage.getItem(COST_MODEL_STORAGE_KEY);
+            return saved ? String(saved) : null;
+          } catch {
+            return null;
+          }
+        }
+
+        function saveSelectedCostModel(model) {
+          try {
+            if (model) {
+              window.localStorage.setItem(COST_MODEL_STORAGE_KEY, String(model));
+            } else {
+              window.localStorage.removeItem(COST_MODEL_STORAGE_KEY);
+            }
+          } catch {}
+        }
+
+        function getCostEntry(series, model) {
+          if (!series || !model) {
+            return null;
+          }
+          return series.costs.find((entry) => entry.model === model) ?? null;
+        }
+
+        function getPricePerMillion(series, model) {
+          const selectedCost = getCostEntry(series, model);
+          const totalTokens = toNumber(series?.totalTokens);
+          if (!selectedCost || totalTokens <= 0) {
+            return 0;
+          }
+          return (toNumber(selectedCost.cost) / totalTokens) * 1000000;
+        }
+
+        function calculateCumulativeCostByTokens(cumulativeTokens, pricePerMillion) {
+          if (pricePerMillion <= 0) {
+            return 0;
+          }
+          return (toNumber(cumulativeTokens) / 1000000) * pricePerMillion;
+        }
+
+        function buildCumulativeCostSeries(series, model) {
+          const pricePerMillion = getPricePerMillion(series, model);
+          return series.timelineTokens.map((tokenTotal) =>
+            calculateCumulativeCostByTokens(tokenTotal, pricePerMillion),
+          );
+        }
+
+        function resolveSelectedCostModel(series) {
+          const selectableCosts = getSelectableCosts(series.costs);
+          if (selectableCosts.length === 0) {
+            state.selectedCostModel = null;
+            saveSelectedCostModel(null);
+            return null;
+          }
+
+          const selectableModels = selectableCosts.map((entry) => entry.model);
+          if (
+            state.selectedCostModel &&
+            selectableModels.includes(state.selectedCostModel)
+          ) {
+            return state.selectedCostModel;
+          }
+
+          const savedModel = loadSavedCostModel();
+          if (savedModel && selectableModels.includes(savedModel)) {
+            state.selectedCostModel = savedModel;
+            return savedModel;
+          }
+
+          state.selectedCostModel = selectableModels[0];
+          saveSelectedCostModel(state.selectedCostModel);
+          return state.selectedCostModel;
+        }
+
+        function syncCostModelSelect(series, selectedModel) {
+          const selectNode = getById("costModelSelect");
+          if (!selectNode) {
+            return;
+          }
+
+          const selectableCosts = getSelectableCosts(series.costs);
+          if (selectableCosts.length === 0) {
+            selectNode.innerHTML = '<option value="">Sem modelos com custo</option>';
+            selectNode.value = "";
+            selectNode.disabled = true;
+            return;
+          }
+
+          selectNode.disabled = false;
+          selectNode.innerHTML = selectableCosts
+            .map(
+              (entry) =>
+                `<option value="${escapeHtml(entry.model)}">${escapeHtml(entry.model)}</option>`,
+            )
+            .join("");
+
+          if (selectedModel && selectableCosts.some((entry) => entry.model === selectedModel)) {
+            selectNode.value = selectedModel;
+            return;
+          }
+
+          selectNode.value = selectableCosts[0].model;
+        }
+
+        function buildSeries(progressData) {
+          const tables = Array.isArray(progressData?.tables)
+            ? [...progressData.tables]
+            : [];
+
+          tables.sort((a, b) => {
+            const t1 = new Date(a?.completedAt ?? 0).getTime();
+            const t2 = new Date(b?.completedAt ?? 0).getTime();
+            return t1 - t2;
+          });
+
+          const progressMeta =
+            progressData && typeof progressData.progress === "object"
+              ? progressData.progress
+              : {};
+          const totalsMeta =
+            progressData && typeof progressData.totals === "object"
+              ? progressData.totals
+              : {};
+
+          const totalTables = Math.max(toNumber(progressMeta.total), tables.length);
+          const completedTables = Math.max(
+            toNumber(progressMeta.completed),
+            tables.length,
+          );
+          const errors = toNumber(progressMeta.errors);
+          const globalPercent =
+            totalTables > 0
+              ? Math.min(100, toNumber(progressMeta.percentComplete))
+              : 0;
+
+          const totalTokens = toNumber(totalsMeta.totalTokens);
+          const totalRows = toNumber(totalsMeta.totalRows);
+          const costs = getModelCosts(totalsMeta.costByModel);
+
+          let cumulativeRows = 0;
+          let cumulativeTokens = 0;
+
+          const rows = tables.map((table, index) => {
+            const schema = String(table?.schema ?? "unknown");
+            const tableName = String(table?.table ?? "table");
+            const fullName = `${schema}.${tableName}`;
+            const rowCount = toNumber(table?.rowCount);
+            const tokenCount = toNumber(table?.tokenCount);
+            const status = table?.status === "error" ? "error" : "completed";
+
+            cumulativeRows += rowCount;
+            cumulativeTokens += tokenCount;
+
+            const completionPercent =
+              totalTables > 0
+                ? Math.min(100, ((index + 1) / totalTables) * 100)
+                : 0;
+
+            return {
+              fullName,
+              status,
+              completedAt: table?.completedAt ?? "",
+              rowCount,
+              tokenCount,
+              cumulativeRows,
+              cumulativeTokens,
+              completionPercent,
+            };
+          });
+
+          return {
+            status: String(progressData?.status ?? "in_progress"),
+            startTime: progressData?.startTime ?? "",
+            lastUpdate: progressData?.lastUpdate ?? "",
+            elapsedSeconds: toNumber(progressData?.elapsedSeconds),
+            totalTables,
+            completedTables,
+            errors,
+            globalPercent,
+            totalRows,
+            totalTokens,
+            costs,
+            rows,
+            labels: rows.map((row) => compactLabel(row.fullName)),
+            timelineRows: rows.map((row) => row.cumulativeRows),
+            timelineTokens: rows.map((row) => row.cumulativeTokens),
+            progressPercent: rows.map((row) => row.completionPercent),
+          };
+        }
+
+        function setBadge(id, text, cssClass) {
+          const node = getById(id);
+          if (!node) {
+            return;
+          }
+          node.textContent = text;
+          node.className = `badge ${cssClass}`.trim();
+        }
+
+        function showError(message) {
+          const banner = getById("errorBanner");
+          if (!banner) {
+            return;
+          }
+          banner.hidden = false;
+          banner.textContent = message;
+        }
+
+        function hideError() {
+          const banner = getById("errorBanner");
+          if (!banner) {
+            return;
+          }
+          banner.hidden = true;
+          banner.textContent = "";
+        }
+
+        function renderSummary(meta, series, selectedModel) {
+          const statusText =
+            series.status === "completed" ? "Processamento finalizado" : "Em processamento";
+          const statusClass = series.status === "completed" ? "ok" : "warn";
+          setBadge("runStatus", statusText, statusClass);
+
+          getById("filePath").textContent = meta?.progressFilePath ?? "-";
+          getById("lastUpdate").textContent = formatDateTime(series.lastUpdate);
+          getById("cardPercent").textContent = formatPercent(series.globalPercent);
+          getById("cardCompleted").textContent = formatNumber(series.completedTables);
+          getById("cardTotal").textContent = formatNumber(series.totalTables);
+          getById("cardRows").textContent = formatNumber(series.totalRows);
+          getById("cardTokens").textContent = formatNumber(series.totalTokens);
+          getById("cardErrors").textContent = formatNumber(series.errors);
+          configureElapsedTicker(series);
+
+          const costNode = getById("cardCost");
+          const costBreakdownDetailsNode = getById("costBreakdownDetails");
+          const costBreakdownSummaryNode = getById("costBreakdownSummary");
+          const costBreakdownListNode = getById("costBreakdownList");
+          const costBreakdownEmptyNode = getById("costBreakdownEmpty");
+          const modelHint = getById("costModelHint");
+          const selectableCosts = getSelectableCosts(series.costs);
+          syncCostModelSelect(series, selectedModel);
+
+          if (selectableCosts.length === 0 || !selectedModel) {
+            costNode.textContent = "-";
+            if (costBreakdownDetailsNode) {
+              costBreakdownDetailsNode.hidden = true;
+              costBreakdownDetailsNode.open = false;
+            }
+            if (costBreakdownSummaryNode) {
+              costBreakdownSummaryNode.textContent = "Ver custos por modelo";
+            }
+            if (costBreakdownListNode) {
+              costBreakdownListNode.replaceChildren();
+            }
+            if (costBreakdownEmptyNode) {
+              costBreakdownEmptyNode.hidden = false;
+              costBreakdownEmptyNode.textContent = "Sem custo calculado";
+            }
+            modelHint.textContent = "Sem modelo de custo para exibir no grafico";
+          } else {
+            const selectedCost = getCostEntry(series, selectedModel);
+            costNode.textContent = selectedCost
+              ? `${selectedCost.model}: ${formatCurrency(selectedCost.cost)}`
+              : "-";
+            if (costBreakdownSummaryNode) {
+              costBreakdownSummaryNode.textContent = `Ver custos por modelo (${selectableCosts.length})`;
+            }
+            renderCostBreakdownList(costBreakdownListNode, selectableCosts, selectedModel);
+            if (costBreakdownDetailsNode) {
+              costBreakdownDetailsNode.hidden = false;
+            }
+            if (costBreakdownEmptyNode) {
+              costBreakdownEmptyNode.hidden = true;
+            }
+            modelHint.textContent = `Curva de custo com base em ${selectedModel}`;
+          }
+        }
+
+        function renderTable(series, selectedModel) {
+          const tableBody = getById("tableBody");
+          if (!tableBody) {
+            return;
+          }
+
+          if (series.rows.length === 0) {
+            tableBody.innerHTML = `
+              <tr>
+                <td class="empty" colspan="9">Nenhuma tabela processada ate agora.</td>
+              </tr>
+            `;
+            return;
+          }
+
+          const hasSelectedModel = Boolean(selectedModel);
+          const pricePerMillion = getPricePerMillion(series, selectedModel);
+          tableBody.innerHTML = series.rows
+            .map((row) => {
+              const statusClass = row.status === "error" ? "error" : "ok";
+              const statusLabel = row.status === "error" ? "Erro" : "Concluida";
+              const cumulativeCost = hasSelectedModel
+                ? formatCurrency(
+                    calculateCumulativeCostByTokens(
+                      row.cumulativeTokens,
+                      pricePerMillion,
+                    ),
+                  )
+                : "-";
+              return `
+                <tr>
+                  <td class="table-name">${escapeHtml(row.fullName)}</td>
+                  <td class="num">${formatPercent(row.completionPercent)}</td>
+                  <td><span class="chip ${statusClass}">${statusLabel}</span></td>
+                  <td class="num">${formatNumber(row.rowCount)}</td>
+                  <td class="num">${formatNumber(row.tokenCount)}</td>
+                  <td class="num">${formatNumber(row.cumulativeRows)}</td>
+                  <td class="num">${formatNumber(row.cumulativeTokens)}</td>
+                  <td class="num">${cumulativeCost}</td>
+                  <td>${formatDateTime(row.completedAt)}</td>
+                </tr>
+              `;
+            })
+            .join("");
+        }
+
+        function chartAvailable() {
+          return typeof window.Chart !== "undefined";
+        }
+
+        function renderTimelineChart(series) {
+          if (!chartAvailable()) {
+            return;
+          }
+
+          const canvas = getById("timelineChart");
+          if (!canvas) {
+            return;
+          }
+
+          const data = {
+            labels: series.labels,
+            datasets: [
+              {
+                label: "Tokens acumulados",
+                data: series.timelineTokens,
+                yAxisID: "yTokens",
+                borderColor: "#b45309",
+                backgroundColor: "rgba(180, 83, 9, 0.18)",
+                fill: true,
+                tension: 0.25,
+                borderWidth: 2,
+                pointRadius: 2.5,
+              },
+              {
+                label: "Linhas acumuladas",
+                data: series.timelineRows,
+                yAxisID: "yRows",
+                borderColor: "#0f766e",
+                backgroundColor: "rgba(15, 118, 110, 0.16)",
+                fill: true,
+                tension: 0.25,
+                borderWidth: 2,
+                pointRadius: 2.5,
+              },
+            ],
+          };
+
+          if (state.timelineChart) {
+            state.timelineChart.data = data;
+            state.timelineChart.update("none");
+            return;
+          }
+
+          state.timelineChart = new Chart(canvas, {
+            type: "line",
+            data,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                },
+              },
+              scales: {
+                yTokens: {
+                  type: "linear",
+                  position: "left",
+                  ticks: {
+                    callback: (value) => formatNumber(value),
+                  },
+                  grid: {
+                    color: "rgba(15, 23, 42, 0.08)",
+                  },
+                },
+                yRows: {
+                  type: "linear",
+                  position: "right",
+                  ticks: {
+                    callback: (value) => formatNumber(value),
+                  },
+                  grid: {
+                    drawOnChartArea: false,
+                  },
+                },
+                x: {
+                  ticks: {
+                    maxRotation: 40,
+                    minRotation: 20,
+                  },
+                  grid: {
+                    color: "rgba(15, 23, 42, 0.06)",
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        function renderProgressChart(series) {
+          if (!chartAvailable()) {
+            return;
+          }
+
+          const canvas = getById("progressChart");
+          if (!canvas) {
+            return;
+          }
+
+          const datasets = [
+            {
+              type: "bar",
+              label: "% concluido",
+              data: series.progressPercent,
+              yAxisID: "yPercent",
+              backgroundColor: "rgba(29, 78, 216, 0.78)",
+              borderRadius: 6,
+              borderSkipped: false,
+            },
+          ];
+
+          const data = {
+            labels: series.labels,
+            datasets,
+          };
+
+          if (state.progressChart) {
+            state.progressChart.data = data;
+            state.progressChart.update("none");
+            return;
+          }
+
+          state.progressChart = new Chart(canvas, {
+            data,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                },
+              },
+              scales: {
+                yPercent: {
+                  type: "linear",
+                  position: "left",
+                  min: 0,
+                  max: 100,
+                  ticks: {
+                    callback: (value) => `${value}%`,
+                  },
+                  grid: {
+                    color: "rgba(15, 23, 42, 0.08)",
+                  },
+                },
+                x: {
+                  ticks: {
+                    maxRotation: 40,
+                    minRotation: 20,
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        function renderCostChart(series, selectedModel) {
+          if (!chartAvailable()) {
+            return;
+          }
+
+          const canvas = getById("costChart");
+          if (!canvas) {
+            return;
+          }
+
+          const datasets = [];
+          if (selectedModel) {
+            datasets.push({
+              type: "line",
+              label: `Custo acumulado (${selectedModel})`,
+              data: buildCumulativeCostSeries(series, selectedModel),
+              yAxisID: "yCost",
+              borderColor: "#0f766e",
+              backgroundColor: "rgba(15, 118, 110, 0.2)",
+              tension: 0.25,
+              borderWidth: 2,
+              pointRadius: 2.5,
+              fill: true,
+            });
+          }
+
+          const data = {
+            labels: series.labels,
+            datasets,
+          };
+
+          if (state.costChart) {
+            state.costChart.data = data;
+            state.costChart.update("none");
+            return;
+          }
+
+          state.costChart = new Chart(canvas, {
+            data,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                },
+              },
+              scales: {
+                yCost: {
+                  type: "linear",
+                  position: "left",
+                  ticks: {
+                    callback: (value) => formatCurrency(value),
+                  },
+                  grid: {
+                    color: "rgba(15, 23, 42, 0.08)",
+                  },
+                },
+                x: {
+                  ticks: {
+                    maxRotation: 40,
+                    minRotation: 20,
+                  },
+                  grid: {
+                    color: "rgba(15, 23, 42, 0.06)",
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        function renderProgressPayload(payload) {
+          const hash = getPayloadHash(payload.progress);
+          if (hash === state.lastHash) {
+            return;
+          }
+          state.lastHash = hash;
+
+          const series = buildSeries(payload.progress);
+          state.latestSeries = series;
+          state.latestMeta = payload.meta;
+          const selectedModel = resolveSelectedCostModel(series);
+
+          renderSummary(payload.meta, series, selectedModel);
+          renderTimelineChart(series);
+          renderProgressChart(series);
+          renderCostChart(series, selectedModel);
+          renderTable(series, selectedModel);
+          hideError();
+        }
+
+        function registerCostModelChangeHandler() {
+          const selectNode = getById("costModelSelect");
+          if (!selectNode) {
+            return;
+          }
+
+          selectNode.addEventListener("change", () => {
+            const selectedModel = selectNode.value ? String(selectNode.value) : null;
+            state.selectedCostModel = selectedModel;
+            saveSelectedCostModel(selectedModel);
+
+            if (!state.latestSeries) {
+              return;
+            }
+
+            const activeModel = resolveSelectedCostModel(state.latestSeries);
+            renderSummary(state.latestMeta, state.latestSeries, activeModel);
+            renderCostChart(state.latestSeries, activeModel);
+            renderTable(state.latestSeries, activeModel);
+          });
+        }
+
+        async function fetchProgressSnapshot() {
+          try {
+            const response = await fetch("/api/progress", {
+              cache: "no-store",
+            });
+            const payload = await response.json();
+            if (!response.ok) {
+              showError(payload.message ?? payload.error ?? "Falha ao carregar progresso");
+              return;
+            }
+            renderProgressPayload(payload);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Falha de conexao";
+            showError(message);
+          }
+        }
+
+        function startFallbackPolling() {
+          if (state.fallbackTimer !== null) {
+            return;
+          }
+          state.fallbackTimer = setInterval(() => {
+            void fetchProgressSnapshot();
+          }, FALLBACK_POLL_MS);
+        }
+
+        function stopFallbackPolling() {
+          if (state.fallbackTimer === null) {
+            return;
+          }
+          clearInterval(state.fallbackTimer);
+          state.fallbackTimer = null;
+        }
+
+        function connectRealTimeStream() {
+          if (!("EventSource" in window)) {
+            setBadge("streamStatus", "SSE indisponivel. Fallback ativo", "warn");
+            startFallbackPolling();
+            void fetchProgressSnapshot();
+            return;
+          }
+
+          const source = new EventSource("/api/stream");
+          state.source = source;
+
+          source.addEventListener("open", () => {
+            setBadge("streamStatus", "Tempo real conectado", "ok");
+            stopFallbackPolling();
+          });
+
+          source.addEventListener("progress", (event) => {
+            try {
+              const payload = JSON.parse(event.data);
+              renderProgressPayload(payload);
+              hideError();
+            } catch (error) {
+              const message = error instanceof Error ? error.message : "Evento invalido";
+              showError(message);
+            }
+          });
+
+          source.addEventListener("progress_error", (event) => {
+            try {
+              const payload = JSON.parse(event.data);
+              showError(payload.message ?? payload.error ?? "Falha ao ler progresso");
+            } catch {
+              showError("Falha ao ler progresso");
+            }
+          });
+
+          source.onerror = () => {
+            setBadge("streamStatus", "Reconectando stream...", "warn");
+            startFallbackPolling();
+          };
+        }
+
+        function bootstrap() {
+          if (!chartAvailable()) {
+            showError("Chart.js nao carregou. A tabela continuara atualizando.");
+          }
+          registerCostModelChangeHandler();
+          connectRealTimeStream();
+          void fetchProgressSnapshot();
+        }
+
+        bootstrap();
+      })();
+    </script>
+  </body>
+</html>

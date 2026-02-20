@@ -30,6 +30,7 @@
   "scripts": {
     "typecheck": "tsc --project tsconfig.embedding.json --noEmit",
     "estimate-cost": "tsx src/cost_estimator/estimate.ts",
+    "progress-dashboard": "tsx src/cost_estimator/progress_dashboard.ts",
     "embedding-cli": "tsx src/embedding-cli.ts",
     "lint": "eslint src cost_estimator",
     "format": "prettier --write ."

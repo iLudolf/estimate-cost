@@ -67,6 +67,10 @@ You will be prompted to:
 3. Select tables to process
 4. Configure Elasticsearch and embedding model *(sync only)*
 
+When running `yarn embedding-cli`, the progress dashboard is started automatically
+at `http://127.0.0.1:4173` (configurable via `COST_DASHBOARD_HOST` and
+`COST_DASHBOARD_PORT`).
+
 ### Via npm scripts (development)
 
 ```bash
@@ -76,9 +80,40 @@ yarn embedding-cli
 # Run the cost estimator directly (non-interactive, reads from env)
 yarn estimate-cost
 
+# Start the real-time web dashboard for progress tracking
+yarn progress-dashboard
+
 # Type-check without compiling
 yarn typecheck
 ```
+
+### Real-time progress dashboard
+
+The estimator continuously writes progress to a JSON file (default: `./cost_estimation_progress.json`).
+You can visualize this in real-time with charts and per-table accumulated values:
+
+1. Run the estimator in one terminal:
+
+```bash
+yarn estimate-cost
+```
+
+2. Run the dashboard in another terminal:
+
+```bash
+yarn progress-dashboard
+```
+
+3. Open the URL shown in the terminal (default: `http://127.0.0.1:4173`).
+
+Note: for `yarn embedding-cli`, this dashboard startup is automatic (single command flow).
+
+Dashboard highlights:
+
+- Real-time updates via SSE stream (`/api/stream`) with fallback polling
+- Per-table completion percentage and processing status
+- Cumulative rows, cumulative tokens, and cumulative model cost over time
+- Detailed table-by-table grid with accumulated values at each completion step
 
 ---
 
@@ -108,6 +143,7 @@ TEXT_COLUMNS_MODE=auto          # auto (text/varchar/json/uuid only) | all
 EXCLUDED_COLUMNS=internal_id    # comma-separated columns to skip
 SOURCE_BATCH_SIZE=1000          # rows per DB fetch
 SOURCE_UPDATED_AT_CANDIDATES=updated_at,modified_at,updatedon
+COST_PROGRESS_FILE=./cost_estimation_progress.json
 
 # ── Elasticsearch ─────────────────────────────────────────────────────────────
 ELASTICSEARCH_URL=https://my-deployment.es.us-east-1.aws.found.io
@@ -122,6 +158,10 @@ ELASTICSEARCH_PASSWORD=changeme
 # ── Embedding ─────────────────────────────────────────────────────────────────
 OPENAI_API_KEY=sk-...
 TARGET_INDEX_PREFIX=db_table_   # default index name prefix
+
+# ── Progress dashboard (optional) ─────────────────────────────────────────────
+COST_DASHBOARD_HOST=127.0.0.1
+COST_DASHBOARD_PORT=4173
 ```
 
 ---

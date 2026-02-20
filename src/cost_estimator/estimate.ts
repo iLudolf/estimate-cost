@@ -12,16 +12,8 @@ import type { TableTokenEstimate } from "./thread_pool.js";
 import type { TextColumnsMode } from "./db/types.js";
 import { TerminalUI } from "./terminal_ui.js";
 import { ProgressFileWriter } from "./progress_file.js";
-
-// ---------------------------------------------------------------------------
-// Pricing
-// ---------------------------------------------------------------------------
-
-/** Price per 1 million tokens for each supported embedding model. */
-export const EMBEDDING_MODEL_PRICING: Record<string, number> = {
-  "text-embedding-3-small": 0.02,
-  "text-embedding-3-large": 0.13,
-};
+import { getPricing, toPricingMap } from "./pricing.js";
+import type { ModelPricingEntry } from "./pricing.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,6 +25,7 @@ export type CostEstimationResult = {
   tables: TableTokenEstimate[];
   totalTokens: number;
   costByModel: Record<string, number>;
+  pricingEntries: ModelPricingEntry[];
 };
 
 // ---------------------------------------------------------------------------
@@ -54,6 +47,7 @@ export async function estimateCost(params: {
   chunkSize?: number;
   ui?: TerminalUI;
   progressWriter?: ProgressFileWriter;
+  pricingEntries?: ModelPricingEntry[];
 }): Promise<CostEstimationResult> {
   const pool = createPostgresPool(params.sourceDbUrl);
   const ui = params.ui;
@@ -175,12 +169,16 @@ export async function estimateCost(params: {
 
     const totalTokens = tables.reduce((sum, t) => sum + t.tokenCount, 0);
 
+    // Fetch pricing if not provided
+    const entries = params.pricingEntries ?? await getPricing();
+    const modelPricing = toPricingMap(entries);
+
     const costByModel: Record<string, number> = {};
-    for (const [model, pricePerMillion] of Object.entries(EMBEDDING_MODEL_PRICING)) {
+    for (const [model, pricePerMillion] of Object.entries(modelPricing)) {
       costByModel[model] = (totalTokens / 1_000_000) * pricePerMillion;
     }
 
-    return { tables, totalTokens, costByModel };
+    return { tables, totalTokens, costByModel, pricingEntries: entries };
   } finally {
     await closePostgresPool(pool);
   }
@@ -235,11 +233,27 @@ function formatReport(result: CostEstimationResult): string {
   lines.push("  Embedding Cost per Model:");
   lines.push("  " + "-".repeat(70));
 
-  for (const [model, cost] of Object.entries(result.costByModel)) {
-    const pricePerM = EMBEDDING_MODEL_PRICING[model];
-    lines.push(
-      `  ${model.padEnd(30)}  $${pricePerM}/1M tokens  =>  $${cost.toFixed(6)}`,
-    );
+  // Group entries by provider
+  const byProvider = new Map<string, ModelPricingEntry[]>();
+  for (const entry of result.pricingEntries) {
+    const group = byProvider.get(entry.provider) ?? [];
+    group.push(entry);
+    byProvider.set(entry.provider, group);
+  }
+
+  for (const [provider, providerEntries] of byProvider) {
+    lines.push(`  ${provider.toUpperCase()}:`);
+    for (const entry of providerEntries) {
+      const cost = result.costByModel[entry.model] ?? 0;
+      const priceLabel =
+        entry.pricePerMillion === 0
+          ? "free/local"
+          : `$${entry.pricePerMillion}/1M tokens`;
+      lines.push(
+        `    ${entry.model.padEnd(34)}  ${priceLabel}  =>  $${cost.toFixed(6)}`,
+      );
+    }
+    lines.push("");
   }
 
   lines.push(separator);
@@ -336,11 +350,15 @@ async function main(): Promise<void> {
 
   const ui = new TerminalUI({ totalTables: 0 });
 
+  // Fetch pricing once; reuse in progressWriter and estimateCost
+  const pricingEntries = await getPricing();
+  const pricingMap = toPricingMap(pricingEntries);
+
   const progressFilePath = process.env.COST_PROGRESS_FILE || "./cost_estimation_progress.json";
   const progressWriter = new ProgressFileWriter({
     filePath: progressFilePath,
     totalTables: 0,
-    modelPricing: EMBEDDING_MODEL_PRICING,
+    modelPricing: pricingMap,
   });
 
   try {
@@ -361,6 +379,7 @@ async function main(): Promise<void> {
       chunkSize,
       ui,
       progressWriter,
+      pricingEntries,
     });
 
     console.log(formatReport(result));
