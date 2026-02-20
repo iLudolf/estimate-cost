@@ -78,7 +78,7 @@ const isTypeScriptRuntime = import.meta.url.endsWith(".ts");
 
 function createWorkerThread(): Worker {
   if (!isTypeScriptRuntime) {
-    return new Worker(JS_WORKER_PATH, { type: "module" });
+    return new Worker(JS_WORKER_PATH);
   }
 
   const bootstrapCode = [
