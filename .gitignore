@@ -3,6 +3,7 @@ index.js
 index.d.ts
 node_modules
 dist
+.npm-cache
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -24,3 +25,4 @@ cost_estimation_progress.json
 # LangGraph API
 .langgraph_api
 docs
+.npm-cache

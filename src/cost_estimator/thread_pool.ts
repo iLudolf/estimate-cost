@@ -72,13 +72,19 @@ export type PoolOptions = {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-const WORKER_PATH = new URL("./estimate_worker.ts", import.meta.url).toString();
+const TS_WORKER_PATH = new URL("./estimate_worker.ts", import.meta.url).toString();
+const JS_WORKER_PATH = new URL("./estimate_worker.js", import.meta.url);
+const isTypeScriptRuntime = import.meta.url.endsWith(".ts");
 
 function createWorkerThread(): Worker {
+  if (!isTypeScriptRuntime) {
+    return new Worker(JS_WORKER_PATH, { type: "module" });
+  }
+
   const bootstrapCode = [
     `import { register } from 'tsx/esm/api';`,
     `register();`,
-    `await import(${JSON.stringify(WORKER_PATH)});`,
+    `await import(${JSON.stringify(TS_WORKER_PATH)});`,
   ].join('\n');
   return new Worker(bootstrapCode, { eval: true });
 }

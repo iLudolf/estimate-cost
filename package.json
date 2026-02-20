@@ -2,16 +2,22 @@
   "name": "@iludolf/embedding-cli",
   "version": "0.1.0",
   "description": "CLI for estimating embedding costs from PostgreSQL tables",
-  "main": "src/embedding-cli.ts",
+  "main": "dist/embedding-cli.js",
+  "types": "dist/embedding-cli.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/embedding-cli.d.ts",
+      "default": "./dist/embedding-cli.js"
+    }
+  },
   "bin": {
-    "embedding-cli": "./bin/embedding-cli.js"
+    "embedding-cli": "bin/embedding-cli.js"
   },
   "files": [
     "bin/",
-    "src/",
-    "cost_estimator/",
-    "tsconfig.json",
-    "tsconfig.embedding.json"
+    "dist/",
+    "README.md",
+    "LICENSE"
   ],
   "keywords": [
     "embedding",
@@ -27,8 +33,14 @@
   },
   "type": "module",
   "packageManager": "yarn@1.22.22",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "build": "tsc --project tsconfig.build.json && node ./scripts/copy-assets.mjs",
+    "prepack": "npm run build",
     "typecheck": "tsc --project tsconfig.embedding.json --noEmit",
+    "release:check": "npm run typecheck && npm pack --dry-run --cache ./.npm-cache",
     "estimate-cost": "tsx src/cost_estimator/estimate.ts",
     "progress-dashboard": "tsx src/cost_estimator/progress_dashboard.ts",
     "embedding-cli": "tsx src/embedding-cli.ts",
