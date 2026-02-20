@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en-US">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -430,59 +430,59 @@
     <main class="page">
       <section class="hero reveal" style="--delay: 20ms">
         <div>
-          <h1>Dashboard de Evolucao da Estimativa de Embeddings</h1>
+          <h1>Embedding Estimation Progress Dashboard</h1>
           <p>
-            Acompanhamento em tempo real por tabela com progresso, acumulados e custo.
-            O painel atualiza automaticamente conforme o arquivo de progresso recebe novos dados.
+            Real-time table-by-table tracking for progress, cumulative totals, and cost.
+            The dashboard updates automatically as the progress file receives new data.
           </p>
           <div class="meta">
-            <div><strong>Arquivo:</strong> <span id="filePath">-</span></div>
-            <div><strong>Ultima atualizacao:</strong> <span id="lastUpdate">-</span></div>
+            <div><strong>File:</strong> <span id="filePath">-</span></div>
+            <div><strong>Last update:</strong> <span id="lastUpdate">-</span></div>
           </div>
         </div>
         <div class="status-box">
-          <span id="runStatus" class="badge">Aguardando dados</span>
-          <span id="streamStatus" class="badge warn">Conectando tempo real...</span>
+          <span id="runStatus" class="badge">Waiting for data</span>
+          <span id="streamStatus" class="badge warn">Connecting real-time...</span>
         </div>
       </section>
 
       <section class="cards">
         <article class="card reveal" style="--delay: 60ms">
-          <p class="label">Progresso global</p>
+          <p class="label">Overall progress</p>
           <p id="cardPercent" class="value">0%</p>
           <div class="sub">
-            <span id="cardCompleted">0</span> de <span id="cardTotal">0</span> tabelas
+            <span id="cardCompleted">0</span> of <span id="cardTotal">0</span> tables
           </div>
         </article>
         <article class="card reveal" style="--delay: 100ms">
-          <p class="label">Linhas acumuladas</p>
+          <p class="label">Cumulative rows</p>
           <p id="cardRows" class="value num">0</p>
-          <div class="sub">Somatorio das tabelas concluidas</div>
+          <div class="sub">Sum of completed tables</div>
         </article>
         <article class="card reveal" style="--delay: 140ms">
-          <p class="label">Tokens acumulados</p>
+          <p class="label">Cumulative tokens</p>
           <p id="cardTokens" class="value num">0</p>
-          <div class="sub">Base para calculo de custo</div>
+          <div class="sub">Baseline for cost calculation</div>
         </article>
         <article class="card reveal" style="--delay: 220ms">
-          <p class="label">Erros</p>
+          <p class="label">Errors</p>
           <p id="cardErrors" class="value num">0</p>
-          <div class="sub">Tabelas com falha de processamento</div>
+          <div class="sub">Tables with processing failures</div>
         </article>
         <article class="card reveal" style="--delay: 260ms">
-          <p class="label">Tempo decorrido</p>
+          <p class="label">Elapsed time</p>
           <p id="cardElapsed" class="value">00:00:00</p>
-          <div class="sub">Desde o inicio da execucao</div>
+          <div class="sub">Since execution start</div>
         </article>
       </section>
 
       <section class="cost-strip reveal" style="--delay: 280ms">
         <div class="cost-strip-head">
-          <p class="label">Custo acumulado (modelo selecionado)</p>
+          <p class="label">Cumulative cost (selected model)</p>
           <label class="cost-model-control" for="costModelSelect">
-            Modelo:
-            <select id="costModelSelect" class="cost-model-select" aria-label="Selecionar modelo de custo">
-              <option value="">Sem modelos com custo</option>
+            Model:
+            <select id="costModelSelect" class="cost-model-select" aria-label="Select cost model">
+              <option value="">No models with cost</option>
             </select>
           </label>
         </div>
@@ -492,10 +492,10 @@
           </div>
           <div class="cost-strip-breakdown">
             <details id="costBreakdownDetails" class="cost-breakdown-details" hidden>
-              <summary id="costBreakdownSummary">Ver custos por modelo</summary>
+              <summary id="costBreakdownSummary">View costs by model</summary>
               <ul id="costBreakdownList" class="cost-breakdown-list"></ul>
             </details>
-            <p id="costBreakdownEmpty" class="cost-breakdown-empty">Sem dados de custo</p>
+            <p id="costBreakdownEmpty" class="cost-breakdown-empty">No cost data</p>
           </div>
         </div>
       </section>
@@ -503,8 +503,8 @@
       <section class="chart-sections">
         <article class="panel reveal" style="--delay: 300ms">
           <div class="panel-head">
-            <h2>Evolucao acumulada por tabela</h2>
-            <p>Linhas e tokens acumulados conforme as tabelas finalizam</p>
+            <h2>Cumulative evolution by table</h2>
+            <p>Cumulative rows and tokens as tables complete</p>
           </div>
           <div class="chart-wrap">
             <canvas id="timelineChart"></canvas>
@@ -512,8 +512,8 @@
         </article>
         <article class="panel reveal" style="--delay: 340ms">
           <div class="panel-head">
-            <h2>Progresso por tabela (%)</h2>
-            <p>Percentual de conclusao na ordem em que as tabelas finalizam</p>
+            <h2>Progress by table (%)</h2>
+            <p>Completion percentage in the order tables finish</p>
           </div>
           <div class="chart-wrap">
             <canvas id="progressChart"></canvas>
@@ -521,8 +521,8 @@
         </article>
         <article class="panel reveal" style="--delay: 380ms">
           <div class="panel-head">
-            <h2>Custo acumulado (modelo selecionado)</h2>
-            <p id="costModelHint">Curva de custo com base no modelo selecionado</p>
+            <h2>Cumulative cost (selected model)</h2>
+            <p id="costModelHint">Cost curve based on the selected model</p>
           </div>
           <div class="chart-wrap">
             <canvas id="costChart"></canvas>
@@ -532,27 +532,27 @@
 
       <section class="panel table-panel reveal" style="--delay: 420ms">
         <div class="panel-head">
-          <h2>Detalhamento por tabela processada</h2>
-          <p>Percentual no momento da conclusao e acumulados ate o ponto</p>
+          <h2>Details per processed table</h2>
+          <p>Completion percentage at finish time and cumulative totals up to that point</p>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Tabela</th>
-                <th>% concluido</th>
+                <th>Table</th>
+                <th>% completed</th>
                 <th>Status</th>
-                <th>Linhas</th>
+                <th>Rows</th>
                 <th>Tokens</th>
-                <th>Linhas acumuladas</th>
-                <th>Tokens acumulados</th>
-                <th>Custo acumulado (modelo selecionado)</th>
-                <th>Concluida em</th>
+                <th>Cumulative rows</th>
+                <th>Cumulative tokens</th>
+                <th>Cumulative cost (selected model)</th>
+                <th>Completed at</th>
               </tr>
             </thead>
             <tbody id="tableBody">
               <tr>
-                <td class="empty" colspan="9">Nenhuma tabela processada ate agora.</td>
+                <td class="empty" colspan="9">No processed tables yet.</td>
               </tr>
             </tbody>
           </table>
@@ -560,7 +560,7 @@
       </section>
 
       <div id="errorBanner" class="error-banner" hidden></div>
-      <p class="footnote">Atualizacao por stream em tempo real com fallback de consulta periodica.</p>
+      <p class="footnote">Real-time stream updates with periodic polling fallback.</p>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
@@ -568,18 +568,18 @@
       (() => {
         const FALLBACK_POLL_MS = 2000;
 
-        const numberFormat = new Intl.NumberFormat("pt-BR");
-        const percentFormat = new Intl.NumberFormat("pt-BR", {
+        const numberFormat = new Intl.NumberFormat("en-US");
+        const percentFormat = new Intl.NumberFormat("en-US", {
           minimumFractionDigits: 1,
           maximumFractionDigits: 1,
         });
-        const currencyFormat = new Intl.NumberFormat("pt-BR", {
+        const currencyFormat = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
           minimumFractionDigits: 4,
           maximumFractionDigits: 6,
         });
-        const dateTimeFormat = new Intl.DateTimeFormat("pt-BR", {
+        const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
           dateStyle: "short",
           timeStyle: "medium",
         });
@@ -757,7 +757,7 @@
           listNode.replaceChildren();
           costs.forEach((entry) => {
             const item = document.createElement("li");
-            const selectedTag = entry.model === selectedModel ? " (selecionado)" : "";
+            const selectedTag = entry.model === selectedModel ? " (selected)" : "";
             item.textContent = `${entry.model}: ${formatCurrency(entry.cost)}${selectedTag}`;
             listNode.appendChild(item);
           });
@@ -847,7 +847,7 @@
 
           const selectableCosts = getSelectableCosts(series.costs);
           if (selectableCosts.length === 0) {
-            selectNode.innerHTML = '<option value="">Sem modelos com custo</option>';
+            selectNode.innerHTML = '<option value="">No models with cost</option>';
             selectNode.value = "";
             selectNode.disabled = true;
             return;
@@ -984,7 +984,7 @@
 
         function renderSummary(meta, series, selectedModel) {
           const statusText =
-            series.status === "completed" ? "Processamento finalizado" : "Em processamento";
+            series.status === "completed" ? "Processing finished" : "Processing";
           const statusClass = series.status === "completed" ? "ok" : "warn";
           setBadge("runStatus", statusText, statusClass);
 
@@ -1014,23 +1014,23 @@
               costBreakdownDetailsNode.open = false;
             }
             if (costBreakdownSummaryNode) {
-              costBreakdownSummaryNode.textContent = "Ver custos por modelo";
+              costBreakdownSummaryNode.textContent = "View costs by model";
             }
             if (costBreakdownListNode) {
               costBreakdownListNode.replaceChildren();
             }
             if (costBreakdownEmptyNode) {
               costBreakdownEmptyNode.hidden = false;
-              costBreakdownEmptyNode.textContent = "Sem custo calculado";
+              costBreakdownEmptyNode.textContent = "No calculated cost";
             }
-            modelHint.textContent = "Sem modelo de custo para exibir no grafico";
+            modelHint.textContent = "No cost model available for chart display";
           } else {
             const selectedCost = getCostEntry(series, selectedModel);
             costNode.textContent = selectedCost
               ? `${selectedCost.model}: ${formatCurrency(selectedCost.cost)}`
               : "-";
             if (costBreakdownSummaryNode) {
-              costBreakdownSummaryNode.textContent = `Ver custos por modelo (${selectableCosts.length})`;
+              costBreakdownSummaryNode.textContent = `View costs by model (${selectableCosts.length})`;
             }
             renderCostBreakdownList(costBreakdownListNode, selectableCosts, selectedModel);
             if (costBreakdownDetailsNode) {
@@ -1039,7 +1039,7 @@
             if (costBreakdownEmptyNode) {
               costBreakdownEmptyNode.hidden = true;
             }
-            modelHint.textContent = `Curva de custo com base em ${selectedModel}`;
+            modelHint.textContent = `Cost curve based on ${selectedModel}`;
           }
         }
 
@@ -1052,7 +1052,7 @@
           if (series.rows.length === 0) {
             tableBody.innerHTML = `
               <tr>
-                <td class="empty" colspan="9">Nenhuma tabela processada ate agora.</td>
+                <td class="empty" colspan="9">No processed tables yet.</td>
               </tr>
             `;
             return;
@@ -1063,7 +1063,7 @@
           tableBody.innerHTML = series.rows
             .map((row) => {
               const statusClass = row.status === "error" ? "error" : "ok";
-              const statusLabel = row.status === "error" ? "Erro" : "Concluida";
+              const statusLabel = row.status === "error" ? "Error" : "Completed";
               const cumulativeCost = hasSelectedModel
                 ? formatCurrency(
                     calculateCumulativeCostByTokens(
@@ -1107,7 +1107,7 @@
             labels: series.labels,
             datasets: [
               {
-                label: "Tokens acumulados",
+                label: "Cumulative tokens",
                 data: series.timelineTokens,
                 yAxisID: "yTokens",
                 borderColor: "#b45309",
@@ -1118,7 +1118,7 @@
                 pointRadius: 2.5,
               },
               {
-                label: "Linhas acumuladas",
+                label: "Cumulative rows",
                 data: series.timelineRows,
                 yAxisID: "yRows",
                 borderColor: "#0f766e",
@@ -1197,7 +1197,7 @@
           const datasets = [
             {
               type: "bar",
-              label: "% concluido",
+              label: "% completed",
               data: series.progressPercent,
               yAxisID: "yPercent",
               backgroundColor: "rgba(29, 78, 216, 0.78)",
@@ -1266,7 +1266,7 @@
           if (selectedModel) {
             datasets.push({
               type: "line",
-              label: `Custo acumulado (${selectedModel})`,
+              label: `Cumulative cost (${selectedModel})`,
               data: buildCumulativeCostSeries(series, selectedModel),
               yAxisID: "yCost",
               borderColor: "#0f766e",
@@ -1374,12 +1374,12 @@
             });
             const payload = await response.json();
             if (!response.ok) {
-              showError(payload.message ?? payload.error ?? "Falha ao carregar progresso");
+              showError(payload.message ?? payload.error ?? "Failed to load progress");
               return;
             }
             renderProgressPayload(payload);
           } catch (error) {
-            const message = error instanceof Error ? error.message : "Falha de conexao";
+            const message = error instanceof Error ? error.message : "Connection failure";
             showError(message);
           }
         }
@@ -1403,7 +1403,7 @@
 
         function connectRealTimeStream() {
           if (!("EventSource" in window)) {
-            setBadge("streamStatus", "SSE indisponivel. Fallback ativo", "warn");
+            setBadge("streamStatus", "SSE unavailable. Fallback enabled", "warn");
             startFallbackPolling();
             void fetchProgressSnapshot();
             return;
@@ -1413,7 +1413,7 @@
           state.source = source;
 
           source.addEventListener("open", () => {
-            setBadge("streamStatus", "Tempo real conectado", "ok");
+            setBadge("streamStatus", "Real-time connected", "ok");
             stopFallbackPolling();
           });
 
@@ -1423,7 +1423,7 @@
               renderProgressPayload(payload);
               hideError();
             } catch (error) {
-              const message = error instanceof Error ? error.message : "Evento invalido";
+              const message = error instanceof Error ? error.message : "Invalid event";
               showError(message);
             }
           });
@@ -1431,21 +1431,21 @@
           source.addEventListener("progress_error", (event) => {
             try {
               const payload = JSON.parse(event.data);
-              showError(payload.message ?? payload.error ?? "Falha ao ler progresso");
+              showError(payload.message ?? payload.error ?? "Failed to read progress");
             } catch {
-              showError("Falha ao ler progresso");
+              showError("Failed to read progress");
             }
           });
 
           source.onerror = () => {
-            setBadge("streamStatus", "Reconectando stream...", "warn");
+            setBadge("streamStatus", "Reconnecting stream...", "warn");
             startFallbackPolling();
           };
         }
 
         function bootstrap() {
           if (!chartAvailable()) {
-            showError("Chart.js nao carregou. A tabela continuara atualizando.");
+            showError("Chart.js did not load. Table updates will continue.");
           }
           registerCostModelChangeHandler();
           connectRealTimeStream();
